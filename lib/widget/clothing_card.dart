@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../models/clothing_item.dart';
 
 class ClothingCard extends StatelessWidget {

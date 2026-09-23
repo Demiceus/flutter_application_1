@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1086971514945",
+    "project_id": "closetly-ai",
+    "storage_bucket": "closetly-ai.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1086971514945:android:e146faed59c8ed0afa76c0",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-WFYty2GdwPSourL2KolsqRwWBTBFenQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

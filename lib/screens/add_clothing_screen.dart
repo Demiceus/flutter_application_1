@@ -87,7 +87,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     });
   }
 
-  void saveClothing() {
+  Future<void> saveClothing() async {
     final String name = nameController.text.trim();
 
     if (name.isEmpty || selectedCategory == null) {
@@ -101,14 +101,19 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
       return;
     }
 
+    final String clothingId = widget.item?.id ??
+        DateTime.now().microsecondsSinceEpoch.toString();
+
     final ClothingItem item = ClothingItem(
-      id: widget.item?.id ??
-          DateTime.now().microsecondsSinceEpoch.toString(),
+      id: clothingId,
       name: name,
       category: selectedCategory!,
       color: selectedColor,
       imageBytes: selectedImage,
+      imagePath: null,
     );
+
+    if (!mounted) return;
 
     Navigator.pop(context, item);
   }
@@ -121,10 +126,8 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
           isEditing ? 'Edit Clothing' : 'Add Clothing',
         ),
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-
         child: Column(
           children: [
             // PHOTO
