@@ -7,38 +7,53 @@ import '../models/outfit_suggestion.dart';
 import 'closetly_ai_rules.dart';
 
 class AIService {
+  // ==========================================================
+  // CLOUDFLARE WORKER
+  // ==========================================================
+
   static const String baseUrl =
-      'http://localhost:11434';
+      'https://closetly-ai.joshuareinbetis.workers.dev';
 
   // ==========================================================
-  // BASIC LLAMA REQUEST
+  // CLOUDFLARE LLAMA REQUEST
   // ==========================================================
 
-  Future<String> generateResponse(
-    String prompt,
-  ) async {
+  Future<String> generateResponse({
+    required String message,
+    required String wardrobe,
+  }) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/api/generate'),
+      Uri.parse(baseUrl),
       headers: {
         'Content-Type': 'application/json',
       },
       body: jsonEncode({
-        'model': 'llama3:latest',
-        'prompt': prompt,
-        'stream': false,
+        'message': message,
+        'wardrobe': wardrobe,
       }),
     );
 
     if (response.statusCode != 200) {
       throw Exception(
-        'Llama request failed: ${response.statusCode}',
+        'Closetly AI request failed: '
+        '${response.statusCode} '
+        '${response.body}',
       );
     }
 
     final Map<String, dynamic> data =
         jsonDecode(response.body);
 
-    return data['response'] as String;
+    final dynamic aiResponse =
+        data['response'];
+
+    if (aiResponse is! String) {
+      throw Exception(
+        'Invalid AI response from Cloudflare Worker.',
+      );
+    }
+
+    return aiResponse;
   }
 
   // ==========================================================
@@ -107,7 +122,10 @@ IMPORTANT:
 - If the user asks a normal question, answer normally.
 ''';
 
-    return generateResponse(prompt);
+    return generateResponse(
+      message: prompt,
+      wardrobe: wardrobe,
+    );
   }
 
   // ==========================================================
@@ -210,7 +228,10 @@ WARDROBE:
 $wardrobe
 ''';
 
-    return generateResponse(prompt);
+    return generateResponse(
+      message: prompt,
+      wardrobe: wardrobe,
+    );
   }
 
   // ==========================================================
@@ -279,8 +300,6 @@ $wardrobe
             clothingItems,
           );
 
-          // Only accept clothing that
-          // actually exists in the wardrobe.
           if (exactName != null) {
             correctedItems.add(exactName);
           }
@@ -301,7 +320,6 @@ $wardrobe
           ? null
           : suggestions;
     } catch (_) {
-      // Normal AI text is not outfit JSON.
       return null;
     }
   }
@@ -317,10 +335,7 @@ $wardrobe
     final String normalizedAI =
         aiName.trim().toLowerCase();
 
-    // --------------------------------------------------------
-    // 1. EXACT MATCH
-    // --------------------------------------------------------
-
+    // Exact match.
     for (final ClothingItem item
         in clothingItems) {
       final String normalizedName =
@@ -331,15 +346,7 @@ $wardrobe
       }
     }
 
-    // --------------------------------------------------------
-    // 2. SAFE PARTIAL MATCH
-    // --------------------------------------------------------
-    //
-    // Only accept this if exactly ONE wardrobe item
-    // matches. This prevents the AI from accidentally
-    // selecting the wrong item.
-    // --------------------------------------------------------
-
+    // Safe partial match.
     final List<ClothingItem> matches =
         clothingItems.where((item) {
       final String name =
@@ -352,15 +359,6 @@ $wardrobe
     if (matches.length == 1) {
       return matches.first.name;
     }
-
-    // --------------------------------------------------------
-    // 3. NO MATCH
-    // --------------------------------------------------------
-    //
-    // Do NOT guess.
-    // Do NOT convert "shoes" into a random shoe.
-    // Do NOT convert "shirt" into a random shirt.
-    // --------------------------------------------------------
 
     return null;
   }

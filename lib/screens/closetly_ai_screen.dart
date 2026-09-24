@@ -559,35 +559,32 @@ class _ClosetlyAIScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          const Color(0xFF08051F),
+  backgroundColor:
+      const Color(0xFF08051F),
 
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
+  body: SafeArea(
+    child: Column(
+      children: [
+        _buildHeader(),
 
-            Expanded(
-              child:
-                  isConversationLoading
-                      ? const Center(
-                          child:
-                              CircularProgressIndicator(
-                            color:
-                                Color(0xFF8A5CFF),
-                          ),
-                        )
-                      : _buildMainContent(),
-            ),
-
-            _buildInputBar(),
-          ],
+        Expanded(
+          child:
+              isConversationLoading
+                  ? const Center(
+                      child:
+                          CircularProgressIndicator(
+                        color:
+                            Color(0xFF8A5CFF),
+                      ),
+                    )
+                  : _buildMainContent(),
         ),
-      ),
 
-      bottomNavigationBar:
-          _buildBottomNavigation(),
-    );
+        _buildInputBar(),
+      ],
+    ),
+  ),
+);
   }
 
   // --------------------------------------------------
@@ -1326,75 +1323,4 @@ class _ClosetlyAIScreenState
     );
   }
 
-  // --------------------------------------------------
-  // BOTTOM NAVIGATION
-  // --------------------------------------------------
-
-  Widget _buildBottomNavigation() {
-    return NavigationBar(
-      backgroundColor:
-          const Color(0xFF100B31),
-      indicatorColor:
-          const Color(0xFF2B1C59),
-      selectedIndex: 2,
-      height: 68,
-      onDestinationSelected:
-          (int index) {
-        if (index == 2) return;
-
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
-          SnackBar(
-            content: Text(
-              index == 0
-                  ? 'Home navigation'
-                  : index == 1
-                      ? 'Wardrobe navigation'
-                      : 'Profile navigation',
-            ),
-            behavior:
-                SnackBarBehavior.floating,
-          ),
-        );
-      },
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(
-            Icons.home_outlined,
-          ),
-          selectedIcon: Icon(
-            Icons.home_rounded,
-          ),
-          label: 'Home',
-        ),
-        NavigationDestination(
-          icon: Icon(
-            Icons.checkroom_outlined,
-          ),
-          selectedIcon: Icon(
-            Icons.checkroom_rounded,
-          ),
-          label: 'Wardrobe',
-        ),
-        NavigationDestination(
-          icon: Icon(
-            Icons.auto_awesome_outlined,
-          ),
-          selectedIcon: Icon(
-            Icons.auto_awesome_rounded,
-          ),
-          label: 'AI',
-        ),
-        NavigationDestination(
-          icon: Icon(
-            Icons.person_outline_rounded,
-          ),
-          selectedIcon: Icon(
-            Icons.person_rounded,
-          ),
-          label: 'User',
-        ),
-      ],
-    );
-  }
 }

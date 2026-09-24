@@ -22,7 +22,7 @@ class GraphPaperPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // Background color
     final backgroundPaint = Paint()
-      ..color = const Color(0xFFF9F7FC);
+      ..color = const Color.fromARGB(255, 34, 29, 41);
 
     canvas.drawRect(
       Rect.fromLTWH(0, 0, size.width, size.height),
@@ -31,7 +31,7 @@ class GraphPaperPainter extends CustomPainter {
 
     // Grid line settings
     final gridPaint = Paint()
-      ..color = const Color(0xFFE2DDE8)
+      ..color = const Color.fromARGB(255, 179, 166, 194)
       ..strokeWidth = 0.6;
 
     const double gridSize = 20;

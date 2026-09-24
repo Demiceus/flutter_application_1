@@ -3,14 +3,17 @@ import 'package:flutter/material.dart';
 import '../models/clothing_item.dart';
 import '../services/local_wardrobe_service.dart';
 import '../widget/clothing_card.dart';
-import '../widget/graph_paper_background.dart';
 import '../widget/wardrobe_filter.dart';
 import 'add_clothing_screen.dart';
 import 'clothing_details_screen.dart';
-import 'closetly_ai_screen.dart';
 
 class WardrobeScreen extends StatefulWidget {
-  const WardrobeScreen({super.key});
+  final VoidCallback? onOpenAI;
+
+  const WardrobeScreen({
+    super.key,
+    this.onOpenAI,
+  });
 
   @override
   State<WardrobeScreen> createState() => _WardrobeScreenState();
@@ -211,25 +214,21 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Closetly',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+      backgroundColor: const Color(0xFF100B31),
+      foregroundColor: Colors.white,
+
+      title: const Text(
+        'Closetly',
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
         ),
+      ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: IconButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        const ClosetlyAIScreen(),
-                  ),
-                );
-              },
+              onPressed: widget.onOpenAI,
               tooltip: 'Closetly AI',
               icon: Container(
                 width: 38,
@@ -249,12 +248,25 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
         ],
       ),
 
-      body: GraphPaperBackground(
-        child: isLoading
-            ? const Center(
-                child: CircularProgressIndicator(),
-              )
-            : Column(
+      body: Container(
+  decoration: const BoxDecoration(
+    gradient: LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        Color(0xFF12082F),
+        Color(0xFF0B0623),
+        Color(0xFF08051F),
+      ],
+    ),
+  ),
+                child: isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF8A5CFF),
+                        ),
+                      )
+                    : Column(
                 children: [
                   const SizedBox(height: 12),
 
@@ -315,16 +327,17 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                   Expanded(
                     child: items.isEmpty
                         ? Center(
-                            child: Text(
-                              searchQuery.isNotEmpty
-                                  ? 'No clothing found'
-                                  : 'No items in this category',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w500,
-                              ),
+                          child: Text(
+                            searchQuery.isNotEmpty
+                                ? 'No clothing found'
+                                : 'No items in this category',
+                            style: const TextStyle(
+                              color: Color(0xFFAAA4C2),
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
                             ),
-                          )
+                          ),
+                        )
                         : GridView.builder(
                             padding: const EdgeInsets.all(16),
                             gridDelegate:

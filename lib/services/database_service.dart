@@ -29,7 +29,7 @@ class DatabaseService {
 
       return openDatabase(
         fileName,
-        version: 3,
+        version: 5,
         onCreate: _createDB,
         onUpgrade: _upgradeDB,
       );
@@ -43,7 +43,7 @@ class DatabaseService {
 
     return openDatabase(
       dbFilePath,
-      version: 3,
+      version: 5,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -73,7 +73,56 @@ class DatabaseService {
         createdAt INTEGER NOT NULL
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE user_profile (
+        id INTEGER PRIMARY KEY,
+        nickname TEXT NOT NULL,
+        gender TEXT
+      )
+    ''');
+
+    await db.insert(
+      'user_profile',
+      {
+        'id': 1,
+        'nickname': 'Closetly User',
+        'gender': null,
+      },
+    );
+    await db.execute('''
+    CREATE TABLE app_settings (
+      settingKey TEXT PRIMARY KEY,
+      settingValue TEXT NOT NULL
+    )
+  ''');
+
+  await db.insert(
+    'app_settings',
+    {
+      'settingKey': 'themeMode',
+      'settingValue': 'dark',
+    },
+  );
+
+  await db.insert(
+    'app_settings',
+    {
+      'settingKey': 'accentColor',
+      'settingValue': 'purple',
+    },
+  );
+
+  await db.insert(
+    'app_settings',
+    {
+      'settingKey': 'animations',
+      'settingValue': 'true',
+    },
+  );
   }
+
+  
 
   Future<void> _upgradeDB(
     Database db,
@@ -97,11 +146,149 @@ class DatabaseService {
         )
       ''');
     }
+
+    if (oldVersion < 4) {
+      await db.execute('''
+        CREATE TABLE user_profile (
+          id INTEGER PRIMARY KEY,
+          nickname TEXT NOT NULL,
+          gender TEXT
+        )
+      ''');
+
+      await db.insert(
+        'user_profile',
+        {
+          'id': 1,
+          'nickname': 'Closetly User',
+          'gender': null,
+        },
+      );
+    }
+
+    if (oldVersion < 5) {
+  await db.execute('''
+    CREATE TABLE app_settings (
+      settingKey TEXT PRIMARY KEY,
+      settingValue TEXT NOT NULL
+    )
+  ''');
+
+  await db.insert(
+    'app_settings',
+    {
+      'settingKey': 'themeMode',
+      'settingValue': 'dark',
+    },
+  );
+
+  await db.insert(
+    'app_settings',
+    {
+      'settingKey': 'accentColor',
+      'settingValue': 'purple',
+    },
+  );
+
+  await db.insert(
+    'app_settings',
+    {
+      'settingKey': 'animations',
+      'settingValue': 'true',
+    },
+  );
+}
   }
 
-  // ============================================================
-  // AI CHAT HISTORY
-  // ============================================================
+  // ==========================================================
+  // USER PROFILE
+  // ==========================================================
+
+  Future<Map<String, dynamic>> getUserProfile() async {
+    final Database db = await database;
+
+    final List<Map<String, dynamic>> results =
+        await db.query(
+      'user_profile',
+      where: 'id = ?',
+      whereArgs: [1],
+      limit: 1,
+    );
+
+    if (results.isEmpty) {
+      await db.insert(
+        'user_profile',
+        {
+          'id': 1,
+          'nickname': 'Closetly User',
+          'gender': null,
+        },
+      );
+
+      return {
+        'id': 1,
+        'nickname': 'Closetly User',
+        'gender': null,
+      };
+    }
+
+    return results.first;
+  }
+
+  Future<void> saveUserProfile({
+    required String nickname,
+    String? gender,
+  }) async {
+    final Database db = await database;
+
+    await db.insert(
+      'user_profile',
+      {
+        'id': 1,
+        'nickname': nickname,
+        'gender': gender,
+      },
+      conflictAlgorithm:
+          ConflictAlgorithm.replace,
+    );
+  }
+// ==========================================================
+  // APPEARANCE
+  // ==========================================================
+Future<Map<String, String>> getAppearanceSettings() async {
+  final Database db = await database;
+
+  final List<Map<String, dynamic>> rows =
+      await db.query('app_settings');
+
+  final Map<String, String> settings = {};
+
+  for (final Map<String, dynamic> row in rows) {
+    settings[row['settingKey'] as String] =
+        row['settingValue'] as String;
+  }
+
+  return settings;
+}
+
+Future<void> saveAppearanceSetting({
+  required String key,
+  required String value,
+}) async {
+  final Database db = await database;
+
+  await db.insert(
+    'app_settings',
+    {
+      'settingKey': key,
+      'settingValue': value,
+    },
+    conflictAlgorithm: ConflictAlgorithm.replace,
+  );
+}
+  // ==========================================================
+  // AI MESSAGES
+  // ==========================================================
 
   Future<void> saveAIMessage({
     required bool isUser,
@@ -138,9 +325,9 @@ class DatabaseService {
     await db.delete('ai_messages');
   }
 
-  // ============================================================
-  // DATABASE CLOSE
-  // ============================================================
+  // ==========================================================
+  // CLOSE DATABASE
+  // ==========================================================
 
   Future<void> close() async {
     if (_database != null) {
