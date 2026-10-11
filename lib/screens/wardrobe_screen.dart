@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/clothing_item.dart';
-import '../services/local_wardrobe_service.dart';
+import '../services/firebase_wardrobe_service.dart';
 import '../widget/clothing_card.dart';
 import '../widget/wardrobe_filter.dart';
 import 'add_clothing_screen.dart';
@@ -21,8 +21,8 @@ class WardrobeScreen extends StatefulWidget {
 }
 
 class WardrobeScreenState extends State<WardrobeScreen> {
- final LocalWardrobeService localWardrobeService =
-    LocalWardrobeService();
+ final FirebaseWardrobeService wardrobeService =
+    FirebaseWardrobeService();
 
   List<ClothingItem> clothingItems = [];
 
@@ -44,7 +44,7 @@ class WardrobeScreenState extends State<WardrobeScreen> {
   Future<void> refreshWardrobe() async {
   try {
     final List<ClothingItem> items =
-        await localWardrobeService.getClothingItems();
+        await wardrobeService.getClothingItems();
 
     if (!mounted) return;
 
@@ -108,7 +108,7 @@ class WardrobeScreenState extends State<WardrobeScreen> {
 
     if (newItem != null) {
       try {
-        await localWardrobeService.addClothing(newItem);
+        await wardrobeService.addClothing(newItem);
 
         if (!mounted) return;
 
@@ -151,9 +151,7 @@ class WardrobeScreenState extends State<WardrobeScreen> {
     // DELETE
     if (result.deleted) {
       try {
-        await localWardrobeService.deleteClothing(
-          item.id,
-        );
+        wardrobeService.deleteClothing(item.id);
 
         if (!mounted) return;
 
@@ -186,9 +184,7 @@ class WardrobeScreenState extends State<WardrobeScreen> {
     // EDIT
     if (result.item != null) {
       try {
-        await localWardrobeService.updateClothing(
-          result.item!,
-        );
+        wardrobeService.updateClothing(result.item!);
 
         if (!mounted) return;
 

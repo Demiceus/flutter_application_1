@@ -11,7 +11,7 @@ import '../models/clothing_item.dart';
 import '../models/outfit_suggestion.dart';
 import '../services/ai_service.dart';
 import '../services/database_service.dart';
-import '../services/local_wardrobe_service.dart';
+import '../services/firebase_wardrobe_service.dart';
 
 class ClosetlyAIMessage {
   final String text;
@@ -35,8 +35,8 @@ class ClosetlyAIScreen extends StatefulWidget {
 class _ClosetlyAIScreenState extends State<ClosetlyAIScreen> {
   final AIService aiService = AIService();
 
-  final LocalWardrobeService wardrobeService =
-      LocalWardrobeService();
+  final FirebaseWardrobeService wardrobeService =
+    FirebaseWardrobeService();
 
   final DatabaseService databaseService =
       DatabaseService.instance;
@@ -766,51 +766,48 @@ Future<void> _retryLastRequest() async {
   // --------------------------------------------------
 
   Future<void> _loadConversation() async {
-    try {
-      final List<Map<String, dynamic>> savedMessages =
-          await databaseService.getAIMessages();
+  try {
+    final List<Map<String, dynamic>> savedMessages =
+        await databaseService.getAIMessages();
 
-      final List<ClosetlyAIMessage> loadedMessages = [];
+    final List<ClosetlyAIMessage> loadedMessages = [];
 
-      for (final Map<String, dynamic> saved in savedMessages) {
-        final bool isUser =
-            (saved['isUser'] as int) == 1;
+    for (final Map<String, dynamic> saved in savedMessages) {
+      final dynamic savedIsUser = saved['isUser'];
 
-        final String type =
-            saved['messageType'] as String;
+      final bool isUser =
+          savedIsUser is bool
+              ? savedIsUser
+              : savedIsUser is int
+                  ? savedIsUser == 1
+                  : false;
 
-        final String content =
-            saved['content'] as String;
+      final String type =
+          saved['messageType'] as String? ?? 'text';
 
-        if (type == 'outfit') {
-          try {
-            final dynamic decoded =
-                jsonDecode(content);
+      final String content =
+          saved['content'] as String? ?? '';
 
-            if (decoded is List) {
-              final List<OutfitSuggestion> outfits =
-                  decoded
-                      .whereType<Map<String, dynamic>>()
-                      .map(OutfitSuggestion.fromJson)
-                      .toList();
+      if (type == 'outfit') {
+        try {
+          final dynamic decoded = jsonDecode(content);
 
-              loadedMessages.add(
-                ClosetlyAIMessage(
-                  text: '',
-                  isUser: isUser,
-                  outfits: outfits,
-                ),
-              );
-            }
-          } catch (_) {
+          if (decoded is List) {
+            final List<OutfitSuggestion> outfits =
+                decoded
+                    .whereType<Map<String, dynamic>>()
+                    .map(OutfitSuggestion.fromJson)
+                    .toList();
+
             loadedMessages.add(
               ClosetlyAIMessage(
-                text: content,
+                text: '',
                 isUser: isUser,
+                outfits: outfits,
               ),
             );
           }
-        } else {
+        } catch (_) {
           loadedMessages.add(
             ClosetlyAIMessage(
               text: content,
@@ -818,58 +815,80 @@ Future<void> _retryLastRequest() async {
             ),
           );
         }
+      } else {
+        loadedMessages.add(
+          ClosetlyAIMessage(
+            text: content,
+            isUser: isUser,
+          ),
+        );
       }
-
-      if (!mounted) return;
-
-      setState(() {
-        messages.clear();
-        messages.addAll(loadedMessages);
-        isConversationLoading = false;
-      });
-
-      if (messages.isEmpty) {
-        _showWelcome();
-      }
-
-      _scrollToBottom();
-    } catch (_) {
-      if (!mounted) return;
-
-      setState(() {
-        isConversationLoading = false;
-      });
-
-      _showWelcome();
     }
-  }
 
-  Future<void> _showWelcome() async {
-  const String welcomeMessage =
-      "Hi! I'm Closetly AI ✨\n\n"
-      "I'm your personal wardrobe assistant. "
-      "I can help you create outfits and make "
-      "the most out of the clothes you already own.";
+    if (!mounted) return;
 
-  // Add it to the current screen.
-  if (mounted) {
-    setState(() {
-      messages.add(
+    // If there is no saved conversation, create the welcome
+    // message in the SAME setState.
+    if (loadedMessages.isEmpty) {
+      const String welcomeMessage =
+          "Hi! I'm Closetly AI ✨\n\n"
+          "I'm your personal wardrobe assistant. "
+          "I can help you create outfits and make "
+          "the most out of the clothes you already own.";
+
+      loadedMessages.add(
         const ClosetlyAIMessage(
           text: welcomeMessage,
           isUser: false,
         ),
       );
+
+      // Save the welcome message without another UI rebuild.
+      await databaseService.saveAIMessage(
+        isUser: false,
+        messageType: 'welcome',
+        content: welcomeMessage,
+      );
+    }
+
+    if (!mounted) return;
+
+    // ONLY ONE UI UPDATE.
+    setState(() {
+      messages
+        ..clear()
+        ..addAll(loadedMessages);
+
+      isConversationLoading = false;
+    });
+
+    _scrollToBottom();
+  } catch (e) {
+    debugPrint('Error loading AI conversation: $e');
+
+    if (!mounted) return;
+
+    const String welcomeMessage =
+        "Hi! I'm Closetly AI ✨\n\n"
+        "I'm your personal wardrobe assistant. "
+        "I can help you create outfits and make "
+        "the most out of the clothes you already own.";
+
+    setState(() {
+      messages
+        ..clear()
+        ..add(
+          const ClosetlyAIMessage(
+            text: welcomeMessage,
+            isUser: false,
+          ),
+        );
+
+      isConversationLoading = false;
     });
   }
-
-  // Save it permanently.
-  await databaseService.saveAIMessage(
-    isUser: false,
-    messageType: 'welcome',
-    content: welcomeMessage,
-  );
 }
+
 
   // --------------------------------------------------
   // CLEAR CONVERSATION
@@ -954,7 +973,27 @@ Future<void> _retryLastRequest() async {
     _lastFailureWasOutfitRequest = false;
   });
 
-  await _showWelcome();
+    const String welcomeMessage =
+    "Hi! I'm Closetly AI ✨\n\n"
+    "I'm your personal wardrobe assistant. "
+    "I can help you create outfits and make "
+    "the most out of the clothes you already own.";
+
+setState(() {
+  messages.add(
+    const ClosetlyAIMessage(
+      text: welcomeMessage,
+      isUser: false,
+    ),
+  );
+});
+
+await databaseService.saveAIMessage(
+  isUser: false,
+  messageType: 'welcome',
+  content: welcomeMessage,
+);
+
 
   if (!mounted) return;
 

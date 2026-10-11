@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/clothing_item.dart';
-import '../services/local_wardrobe_service.dart';
+import '../services/firebase_wardrobe_service.dart';
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onOpenAI;
 
@@ -14,8 +14,8 @@ State<HomeScreen> createState() => HomeScreenState();
 }
 
 class HomeScreenState extends State<HomeScreen> {
-  final LocalWardrobeService localWardrobeService =
-      LocalWardrobeService();
+  final FirebaseWardrobeService wardrobeService =
+    FirebaseWardrobeService();
 
   List<ClothingItem> recentItems = [];
 
@@ -30,7 +30,7 @@ class HomeScreenState extends State<HomeScreen> {
   Future<void> loadHomeData() async {
     try {
       final List<ClothingItem> items =
-          await localWardrobeService.getClothingItems();
+          await wardrobeService.getClothingItems();
 
       if (!mounted) return;
 

@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DatabaseService {
   static final DatabaseService instance =
@@ -199,74 +201,99 @@ class DatabaseService {
   );
 }
   }
-
   // ==========================================================
-  // USER PROFILE
-  // ==========================================================
-
-  Future<Map<String, dynamic>> getUserProfile() async {
-    final Database db = await database;
-
-    final List<Map<String, dynamic>> results =
-        await db.query(
-      'user_profile',
-      where: 'id = ?',
-      whereArgs: [1],
-      limit: 1,
-    );
-
-    if (results.isEmpty) {
-      await db.insert(
-        'user_profile',
-        {
-          'id': 1,
-          'nickname': 'Closetly User',
-          'gender': null,
-        },
-      );
-
-      return {
-        'id': 1,
-        'nickname': 'Closetly User',
-        'gender': null,
-      };
-    }
-
-    return results.first;
-  }
-
-  Future<void> saveUserProfile({
-    required String nickname,
-    String? gender,
-  }) async {
-    final Database db = await database;
-
-    await db.insert(
-      'user_profile',
-      {
-        'id': 1,
-        'nickname': nickname,
-        'gender': gender,
-      },
-      conflictAlgorithm:
-          ConflictAlgorithm.replace,
-    );
-  }
+// USER PROFILE - FIRESTORE
 // ==========================================================
-  // APPEARANCE
-  // ==========================================================
-Future<Map<String, String>> getAppearanceSettings() async {
-  final Database db = await database;
 
-  final List<Map<String, dynamic>> rows =
-      await db.query('app_settings');
+DocumentReference<Map<String, dynamic>>
+    get _userProfileDocument {
+  final User? user = FirebaseAuth.instance.currentUser;
+
+  if (user == null) {
+    throw Exception('User is not logged in.');
+  }
+
+  return FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .collection('profile')
+      .doc('info');
+}
+
+Future<Map<String, dynamic>> getUserProfile() async {
+  final DocumentSnapshot<Map<String, dynamic>> snapshot =
+      await _userProfileDocument.get();
+
+  if (!snapshot.exists) {
+    return {
+      'nickname': 'Closetly User',
+      'gender': null,
+    };
+  }
+
+  final Map<String, dynamic> data =
+      snapshot.data() ?? {};
+
+  return {
+    'nickname':
+        data['nickname'] as String? ?? 'Closetly User',
+    'gender':
+        data['gender'] as String?,
+  };
+}
+
+Future<void> saveUserProfile({
+  required String nickname,
+  String? gender,
+}) async {
+  await _userProfileDocument.set(
+    {
+      'nickname': nickname,
+      'gender': gender,
+      'updatedAt': Timestamp.now(),
+    },
+    SetOptions(merge: true),
+  );
+}
+// ==========================================================
+// APPEARANCE SETTINGS - FIRESTORE
+// ==========================================================
+
+CollectionReference<Map<String, dynamic>>
+    get _appearanceSettingsCollection {
+  final User? user = FirebaseAuth.instance.currentUser;
+
+  if (user == null) {
+    throw Exception('User is not logged in.');
+  }
+
+  return FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .collection('settings');
+}
+
+Future<Map<String, String>> getAppearanceSettings() async {
+  final QuerySnapshot<Map<String, dynamic>> snapshot =
+      await _appearanceSettingsCollection.get();
 
   final Map<String, String> settings = {};
 
-  for (final Map<String, dynamic> row in rows) {
-    settings[row['settingKey'] as String] =
-        row['settingValue'] as String;
+  for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+      in snapshot.docs) {
+    final Map<String, dynamic> data = doc.data();
+
+    final String? value = data['value'] as String?;
+
+    if (value != null) {
+      settings[doc.id] = value;
+    }
   }
+
+  // Default settings for new accounts.
+  settings.putIfAbsent('themeMode', () => 'dark');
+  settings.putIfAbsent('accentColor', () => 'purple');
+  settings.putIfAbsent('animations', () => 'true');
 
   return settings;
 }
@@ -275,56 +302,79 @@ Future<void> saveAppearanceSetting({
   required String key,
   required String value,
 }) async {
-  final Database db = await database;
-
-  await db.insert(
-    'app_settings',
-    {
-      'settingKey': key,
-      'settingValue': value,
-    },
-    conflictAlgorithm: ConflictAlgorithm.replace,
-  );
+  await _appearanceSettingsCollection
+      .doc(key)
+      .set({
+        'value': value,
+        'updatedAt': Timestamp.now(),
+      });
 }
-  // ==========================================================
-  // AI MESSAGES
-  // ==========================================================
+// ==========================================================
+// AI MESSAGES - FIRESTORE
+// ==========================================================
 
-  Future<void> saveAIMessage({
-    required bool isUser,
-    required String messageType,
-    required String content,
-  }) async {
-    final Database db = await database;
+CollectionReference<Map<String, dynamic>>
+    get _aiMessagesCollection {
+  final User? user = FirebaseAuth.instance.currentUser;
 
-    await db.insert(
-      'ai_messages',
-      {
-        'isUser': isUser ? 1 : 0,
-        'messageType': messageType,
-        'content': content,
-        'createdAt':
-            DateTime.now().millisecondsSinceEpoch,
-      },
-    );
+  if (user == null) {
+    throw Exception('User is not logged in.');
   }
 
-  Future<List<Map<String, dynamic>>>
-      getAIMessages() async {
-    final Database db = await database;
+  return FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .collection('ai_messages');
+}
 
-    return db.query(
-      'ai_messages',
-      orderBy: 'createdAt ASC, id ASC',
-    );
+Future<void> saveAIMessage({
+  required bool isUser,
+  required String messageType,
+  required String content,
+}) async {
+  await _aiMessagesCollection.add({
+    'isUser': isUser,
+    'messageType': messageType,
+    'content': content,
+    'createdAt': Timestamp.now(),
+  });
+}
+
+Future<List<Map<String, dynamic>>> getAIMessages() async {
+  final QuerySnapshot<Map<String, dynamic>> snapshot =
+      await _aiMessagesCollection
+          .orderBy('createdAt', descending: false)
+          .get();
+
+  return snapshot.docs.map((doc) {
+    final Map<String, dynamic> data = doc.data();
+
+    return {
+      'id': doc.id,
+      'isUser': data['isUser'] == true,
+      'messageType':
+          data['messageType'] as String? ?? 'text',
+      'content':
+          data['content'] as String? ?? '',
+      'createdAt': data['createdAt'],
+    };
+  }).toList();
+}
+
+Future<void> clearAIMessages() async {
+  final QuerySnapshot<Map<String, dynamic>> snapshot =
+      await _aiMessagesCollection.get();
+
+  final WriteBatch batch =
+      FirebaseFirestore.instance.batch();
+
+  for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+      in snapshot.docs) {
+    batch.delete(doc.reference);
   }
 
-  Future<void> clearAIMessages() async {
-    final Database db = await database;
-
-    await db.delete('ai_messages');
-  }
-
+  await batch.commit();
+}
   // ==========================================================
 // CLOTHING
 // ==========================================================

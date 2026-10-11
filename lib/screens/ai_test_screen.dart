@@ -4,7 +4,7 @@ import '../models/clothing_item.dart';
 import '../models/outfit_suggestion.dart';
 import '../services/ai_service.dart';
 import '../services/closetly_ai_rules.dart';
-import '../services/local_wardrobe_service.dart';
+import '../services/firebase_wardrobe_service.dart';
 
 class ClosetlyAIMessage {
   final String text;
@@ -32,8 +32,8 @@ class _ClosetlyAIScreenState
     extends State<ClosetlyAIScreen> {
   final AIService aiService = AIService();
 
-  final LocalWardrobeService wardrobeService =
-      LocalWardrobeService();
+  final FirebaseWardrobeService wardrobeService =
+    FirebaseWardrobeService();
 
   final TextEditingController messageController =
       TextEditingController();

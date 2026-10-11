@@ -6,15 +6,20 @@ import 'screens/user_screen.dart';
 import 'screens/wardrobe_screen.dart';
 import 'services/appearance_service.dart';
 import 'services/database_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'screens/auth_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize local database.
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Initialize local database for now.
   await DatabaseService.instance.database;
 
-  // Load saved appearance settings.
-  await AppearanceService.instance.load();
 
   runApp(const MyApp());
 }
@@ -65,7 +70,7 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
           ),
 
-          home: const ClosetlyApp(),
+          home: const AuthGate(),
         );
       },
     );
@@ -88,6 +93,13 @@ class _ClosetlyAppState extends State<ClosetlyApp> {
 
   final GlobalKey<WardrobeScreenState> wardrobeKey =
       GlobalKey<WardrobeScreenState>();
+
+  @override
+  void initState() {
+    super.initState();
+
+    AppearanceService.instance.load();
+  }
 
   @override
   Widget build(BuildContext context) {

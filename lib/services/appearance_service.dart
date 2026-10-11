@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-
-import 'database_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AppearanceService extends ChangeNotifier {
   AppearanceService._();
@@ -16,71 +16,168 @@ class AppearanceService extends ChangeNotifier {
 
   bool isLoaded = false;
 
+  // ==========================================================
+  // FIRESTORE
+  // ==========================================================
+
+  CollectionReference<Map<String, dynamic>>
+      get _settingsCollection {
+    final User? user =
+        FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception('User is not logged in.');
+    }
+
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('settings');
+  }
+
+  // ==========================================================
+  // LOAD SETTINGS
+  // ==========================================================
+
   Future<void> load() async {
-    final Map<String, String> settings =
-        await DatabaseService.instance
-            .getAppearanceSettings();
+    try {
+      final QuerySnapshot<Map<String, dynamic>>
+          snapshot =
+          await _settingsCollection.get();
 
-    final String theme =
-        settings['themeMode'] ?? 'dark';
+      String theme = 'dark';
+      String accent = 'purple';
+      String animations = 'true';
 
-    final String accent =
-        settings['accentColor'] ?? 'purple';
+      for (final QueryDocumentSnapshot<
+          Map<String, dynamic>> doc
+          in snapshot.docs) {
+        final Map<String, dynamic> data =
+            doc.data();
 
-    final String animations =
-        settings['animations'] ?? 'true';
+        final String value =
+            data['value']?.toString() ?? '';
 
-    themeMode = _parseThemeMode(theme);
-    accentColor = accent;
-    animationsEnabled =
-        animations == 'true';
+        switch (doc.id) {
+          case 'themeMode':
+            theme = value;
+            break;
 
-    isLoaded = true;
+          case 'accentColor':
+            accent = value;
+            break;
+
+          case 'animations':
+            animations = value;
+            break;
+        }
+      }
+
+      themeMode = _parseThemeMode(theme);
+      accentColor = accent;
+      animationsEnabled = animations == 'true';
+
+      isLoaded = true;
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint(
+        'Error loading appearance settings: $e',
+      );
+
+      // Use default settings if loading fails.
+      themeMode = ThemeMode.dark;
+      accentColor = 'purple';
+      animationsEnabled = true;
+      isLoaded = true;
+
+      notifyListeners();
+    }
+  }
+
+  // ==========================================================
+  // RESET WHEN LOGGED OUT
+  // ==========================================================
+
+  void resetToDefaults() {
+    themeMode = ThemeMode.dark;
+    accentColor = 'purple';
+    animationsEnabled = true;
+    isLoaded = false;
 
     notifyListeners();
   }
+
+  // ==========================================================
+  // SAVE SETTING
+  // ==========================================================
+
+  Future<void> _saveSetting({
+    required String key,
+    required String value,
+  }) async {
+    await _settingsCollection
+        .doc(key)
+        .set({
+      'value': value,
+      'updatedAt': Timestamp.now(),
+    });
+  }
+
+  // ==========================================================
+  // THEME
+  // ==========================================================
 
   Future<void> setThemeMode(
     ThemeMode mode,
   ) async {
     themeMode = mode;
 
-    await DatabaseService.instance
-        .saveAppearanceSetting(
+    notifyListeners();
+
+    await _saveSetting(
       key: 'themeMode',
       value: _themeModeToString(mode),
     );
-
-    notifyListeners();
   }
+
+  // ==========================================================
+  // ACCENT COLOR
+  // ==========================================================
 
   Future<void> setAccentColor(
     String color,
   ) async {
     accentColor = color;
 
-    await DatabaseService.instance
-        .saveAppearanceSetting(
+    notifyListeners();
+
+    await _saveSetting(
       key: 'accentColor',
       value: color,
     );
-
-    notifyListeners();
   }
+
+  // ==========================================================
+  // ANIMATIONS
+  // ==========================================================
 
   Future<void> setAnimations(
     bool enabled,
   ) async {
     animationsEnabled = enabled;
 
-    await DatabaseService.instance
-        .saveAppearanceSetting(
+    notifyListeners();
+
+    await _saveSetting(
       key: 'animations',
       value: enabled.toString(),
     );
-
-    notifyListeners();
   }
+
+  // ==========================================================
+  // HELPERS
+  // ==========================================================
 
   ThemeMode _parseThemeMode(
     String value,
@@ -112,6 +209,10 @@ class AppearanceService extends ChangeNotifier {
         return 'dark';
     }
   }
+
+  // ==========================================================
+  // ACCENT COLOR
+  // ==========================================================
 
   Color get accent {
     switch (accentColor) {

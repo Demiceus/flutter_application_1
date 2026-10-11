@@ -3,6 +3,7 @@
   import '../services/database_service.dart';
   import 'appearance_screen.dart';
   import 'profile_screen.dart';
+  import '../services/auth_service.dart';
 
   class UserScreen extends StatefulWidget {
     const UserScreen({super.key});
@@ -296,6 +297,17 @@
                       );
                     },
                   ),
+                  const SizedBox(height: 10),
+                  // LOG OUT
+                  _buildSettingCard(
+                    icon: Icons.logout_rounded,
+                    title: 'Log Out',
+                    subtitle: 'Sign out of your Closetly account',
+                    onTap: () async {
+                      await AuthService().logout();
+                    },
+                  ),
+                  
 
                   const SizedBox(height: 24),
 
