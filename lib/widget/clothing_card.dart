@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/clothing_item.dart';
 
 class ClothingCard extends StatelessWidget {
@@ -13,16 +14,47 @@ class ClothingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme colors = theme.colorScheme;
+
+    final bool isDark =
+        theme.brightness == Brightness.dark;
+
+    final Color cardColor = isDark
+        ? const Color(0xFF151033)
+        : colors.surface;
+
+    final Color secondaryText = isDark
+        ? const Color(0xFFAAA4C2)
+        : colors.onSurfaceVariant;
+
+    final Color emptyImageBackground = isDark
+        ? const Color(0xFF211642)
+        : colors.surfaceContainerHighest;
+
+    final Color emptyImageIcon = isDark
+        ? const Color(0xFFAAA4C2)
+        : colors.onSurfaceVariant;
+
     return Card(
       clipBehavior: Clip.antiAlias,
-      elevation: 3,
+      elevation: isDark ? 3 : 2,
+      color: cardColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
+        side: isDark
+            ? const BorderSide(
+                color: Color(0xFF29204F),
+              )
+            : BorderSide(
+                color: colors.outlineVariant,
+              ),
       ),
       child: InkWell(
         onTap: onTap,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
           children: [
             Expanded(
               child: item.imageBytes != null
@@ -33,11 +65,11 @@ class ClothingCard extends StatelessWidget {
                     )
                   : Container(
                       width: double.infinity,
-                      color: Colors.grey.shade200,
-                      child: const Icon(
+                      color: emptyImageBackground,
+                      child: Icon(
                         Icons.checkroom,
                         size: 60,
-                        color: Colors.grey,
+                        color: emptyImageIcon,
                       ),
                     ),
             ),
@@ -45,15 +77,18 @@ class ClothingCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
                 children: [
                   Text(
                     item.name,
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    overflow:
+                        TextOverflow.ellipsis,
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      color: colors.onSurface,
                     ),
                   ),
 
@@ -63,17 +98,18 @@ class ClothingCard extends StatelessWidget {
                     item.category,
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.grey.shade700,
+                      color: secondaryText,
                     ),
                   ),
 
                   if (item.color != null) ...[
                     const SizedBox(height: 3),
+
                     Text(
                       item.color!,
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.grey.shade600,
+                        color: secondaryText,
                       ),
                     ),
                   ],

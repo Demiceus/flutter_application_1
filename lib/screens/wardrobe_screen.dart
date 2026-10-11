@@ -10,16 +10,17 @@ import 'clothing_details_screen.dart';
 class WardrobeScreen extends StatefulWidget {
   final VoidCallback? onOpenAI;
 
+  
   const WardrobeScreen({
     super.key,
     this.onOpenAI,
   });
 
   @override
-  State<WardrobeScreen> createState() => _WardrobeScreenState();
+  State<WardrobeScreen> createState() => WardrobeScreenState();
 }
 
-class _WardrobeScreenState extends State<WardrobeScreen> {
+class WardrobeScreenState extends State<WardrobeScreen> {
  final LocalWardrobeService localWardrobeService =
     LocalWardrobeService();
 
@@ -35,38 +36,38 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
 
   @override
   void initState() {
-    super.initState();
-    loadClothing();
-  }
+  super.initState();
+  refreshWardrobe();
+}
 
 // LOAD FROM LOCAL DATABASE
-  Future<void> loadClothing() async {
-    try {
-      final List<ClothingItem> items =
-    await localWardrobeService.getClothingItems();
+  Future<void> refreshWardrobe() async {
+  try {
+    final List<ClothingItem> items =
+        await localWardrobeService.getClothingItems();
 
-      if (!mounted) return;
+    if (!mounted) return;
 
-      setState(() {
-        clothingItems = items;
-        isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
+    setState(() {
+      clothingItems = items;
+      isLoading = false;
+    });
+  } catch (e) {
+    if (!mounted) return;
 
-      setState(() {
-        isLoading = false;
-      });
+    setState(() {
+      isLoading = false;
+    });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Failed to load wardrobe: $e',
-          ),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Failed to load wardrobe: $e',
         ),
-      );
-    }
+      ),
+    );
   }
+}
 
   @override
   void dispose() {
@@ -209,172 +210,219 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final List<ClothingItem> items = filteredItems;
+Widget build(BuildContext context) {
+  final List<ClothingItem> items = filteredItems;
 
-    return Scaffold(
-      appBar: AppBar(
-      backgroundColor: const Color(0xFF100B31),
-      foregroundColor: Colors.white,
+  final ThemeData theme = Theme.of(context);
+  final ColorScheme colors = theme.colorScheme;
+  final bool isDark = theme.brightness == Brightness.dark;
 
-      title: const Text(
+  final Color pageBackground = isDark
+      ? const Color(0xFF08051F)
+      : colors.surface;
+
+  final Color appBarBackground = isDark
+      ? const Color(0xFF100B31)
+      : colors.surface;
+
+  final Color searchBackground = isDark
+      ? const Color(0xFF151033)
+      : colors.surfaceContainerHighest;
+
+  final Color secondaryText = isDark
+      ? const Color(0xFFAAA4C2)
+      : colors.onSurfaceVariant;
+
+  return Scaffold(
+    backgroundColor: pageBackground,
+
+    appBar: AppBar(
+      backgroundColor: appBarBackground,
+      foregroundColor: colors.onSurface,
+      elevation: 0,
+
+      title: Text(
         'Closetly',
         style: TextStyle(
-          color: Colors.white,
+          color: colors.onSurface,
           fontWeight: FontWeight.bold,
         ),
       ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: IconButton(
-              onPressed: widget.onOpenAI,
-              tooltip: 'Closetly AI',
-              icon: Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.deepPurple.shade100,
+
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: IconButton(
+            onPressed: widget.onOpenAI,
+            tooltip: 'Closetly AI',
+            icon: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: colors.primary.withValues(
+                  alpha: isDark ? 0.22 : 0.12,
                 ),
-                child: const Icon(
-                  Icons.auto_awesome,
-                  color: Colors.deepPurple,
-                  size: 21,
-                ),
+              ),
+              child: Icon(
+                Icons.auto_awesome,
+                color: colors.primary,
+                size: 21,
               ),
             ),
           ),
-        ],
-      ),
-
-      body: Container(
-  decoration: const BoxDecoration(
-    gradient: LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [
-        Color(0xFF12082F),
-        Color(0xFF0B0623),
-        Color(0xFF08051F),
+        ),
       ],
     ),
-  ),
-                child: isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFF8A5CFF),
-                        ),
-                      )
-                    : Column(
-                children: [
-                  const SizedBox(height: 12),
 
-                  // SEARCH
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
+    body: Container(
+      color: pageBackground,
+
+      child: isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                color: colors.primary,
+              ),
+            )
+          : Column(
+              children: [
+                const SizedBox(height: 12),
+
+                // SEARCH
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                  ),
+                  child: TextField(
+                    controller: searchController,
+                    onChanged: (value) {
+                      setState(() {
+                        searchQuery = value;
+                      });
+                    },
+                    style: TextStyle(
+                      color: colors.onSurface,
                     ),
-                    child: TextField(
-                      controller: searchController,
-                      onChanged: (value) {
-                        setState(() {
-                          searchQuery = value;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Search clothing...',
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon: searchQuery.isNotEmpty
-                            ? IconButton(
-                                onPressed: () {
-                                  searchController.clear();
+                    cursorColor: colors.primary,
+                    decoration: InputDecoration(
+                      hintText: 'Search clothing...',
+                      hintStyle: TextStyle(
+                        color: secondaryText,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: secondaryText,
+                      ),
+                      suffixIcon:
+                          searchQuery.isNotEmpty
+                              ? IconButton(
+                                  onPressed: () {
+                                    searchController.clear();
 
-                                  setState(() {
-                                    searchQuery = '';
-                                  });
-                                },
-                                icon: const Icon(Icons.clear),
-                              )
-                            : null,
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
+                                    setState(() {
+                                      searchQuery = '';
+                                    });
+                                  },
+                                  icon: Icon(
+                                    Icons.clear,
+                                    color: secondaryText,
+                                  ),
+                                )
+                              : null,
+                      filled: true,
+                      fillColor: searchBackground,
+                      border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: colors.primary,
+                          width: 1.5,
                         ),
                       ),
                     ),
                   ),
+                ),
 
-                  const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-                  // CATEGORY FILTER
-                  WardrobeFilter(
-                    selectedCategory: selectedCategory,
-                    clothingItems: clothingItems,
-                    onCategoryChanged: (category) {
-                      setState(() {
-                        selectedCategory = category;
-                      });
-                    },
-                  ),
+                // CATEGORY FILTER
+                WardrobeFilter(
+                  selectedCategory: selectedCategory,
+                  clothingItems: clothingItems,
+                  onCategoryChanged: (category) {
+                    setState(() {
+                      selectedCategory = category;
+                    });
+                  },
+                ),
 
-                  const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-                  // GRID
-                  Expanded(
-                    child: items.isEmpty
-                        ? Center(
+                // GRID
+                Expanded(
+                  child: items.isEmpty
+                      ? Center(
                           child: Text(
                             searchQuery.isNotEmpty
                                 ? 'No clothing found'
                                 : 'No items in this category',
-                            style: const TextStyle(
-                              color: Color(0xFFAAA4C2),
+                            style: TextStyle(
+                              color: secondaryText,
                               fontSize: 18,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                         )
-                        : GridView.builder(
-                            padding: const EdgeInsets.all(16),
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 14,
-                              mainAxisSpacing: 14,
-                              childAspectRatio: 0.70,
-                            ),
-                            itemCount: items.length,
-                            itemBuilder: (context, index) {
-                              final ClothingItem item =
-                                  items[index];
-
-                              final int originalIndex =
-                                  clothingItems.indexOf(item);
-
-                              return ClothingCard(
-                                item: item,
-                                onTap: () {
-                                  openClothingDetails(
-                                    item,
-                                    originalIndex,
-                                  );
-                                },
-                              );
-                            },
+                      : GridView.builder(
+                          padding: const EdgeInsets.all(16),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 14,
+                            mainAxisSpacing: 14,
+                            childAspectRatio: 0.70,
                           ),
-                  ),
-                ],
-              ),
-      ),
+                          itemCount: items.length,
+                          itemBuilder:
+                              (context, index) {
+                            final ClothingItem item =
+                                items[index];
 
-      floatingActionButton: FloatingActionButton(
-        onPressed: addClothing,
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
+                            final int originalIndex =
+                                clothingItems.indexOf(item);
+
+                            return ClothingCard(
+                              item: item,
+                              onTap: () {
+                                openClothingDetails(
+                                  item,
+                                  originalIndex,
+                                );
+                              },
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+    ),
+
+    floatingActionButton: FloatingActionButton(
+      onPressed: addClothing,
+      backgroundColor: colors.primary,
+      foregroundColor: colors.onPrimary,
+      child: const Icon(Icons.add),
+    ),
+  );
+}
 }

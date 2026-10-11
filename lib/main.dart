@@ -10,8 +10,10 @@ import 'services/database_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize local database.
   await DatabaseService.instance.database;
 
+  // Load saved appearance settings.
   await AppearanceService.instance.load();
 
   runApp(const MyApp());
@@ -28,24 +30,22 @@ class MyApp extends StatelessWidget {
     return AnimatedBuilder(
       animation: appearance,
       builder: (context, _) {
-        final Color accent =
-            appearance.accent;
+        final Color accent = appearance.accent;
 
-        
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           title: 'Closetly',
 
-          themeMode:
-              appearance.themeMode,
+          // Use saved theme mode.
+          themeMode: appearance.themeMode,
 
+          // Animate theme changes only when enabled.
           themeAnimationDuration:
               appearance.animationsEnabled
-                  ? const Duration(
-                      milliseconds: 300,
-                    )
+                  ? const Duration(milliseconds: 300)
                   : Duration.zero,
 
+          // LIGHT THEME
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
               seedColor: accent,
@@ -54,6 +54,7 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
           ),
 
+          // DARK THEME
           darkTheme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
               seedColor: accent,
@@ -79,22 +80,43 @@ class ClosetlyApp extends StatefulWidget {
       _ClosetlyAppState();
 }
 
-class _ClosetlyAppState
-    extends State<ClosetlyApp> {
+class _ClosetlyAppState extends State<ClosetlyApp> {
   int selectedIndex = 0;
 
-  final List<Widget> screens = const [
-    HomeScreen(),
-    WardrobeScreen(),
-    ClosetlyAIScreen(),
-    UserScreen(),
-  ];
+  final GlobalKey<HomeScreenState> homeKey =
+      GlobalKey<HomeScreenState>();
+
+  final GlobalKey<WardrobeScreenState> wardrobeKey =
+      GlobalKey<WardrobeScreenState>();
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors =
         Theme.of(context).colorScheme;
 
+    final List<Widget> screens = [
+    HomeScreen(
+      key: homeKey,
+      onOpenAI: () {
+        setState(() {
+          selectedIndex = 2;
+        });
+      },
+    ),
+
+    WardrobeScreen(
+    key: wardrobeKey,
+    onOpenAI: () {
+      setState(() {
+        selectedIndex = 2;
+      });
+    },
+  ),
+
+    const ClosetlyAIScreen(),
+
+    const UserScreen(),
+  ];
     return Scaffold(
       body: IndexedStack(
         index: selectedIndex,
@@ -114,10 +136,18 @@ class _ClosetlyAppState
         height: 70,
 
         onDestinationSelected: (int index) {
-          setState(() {
-            selectedIndex = index;
-          });
-        },
+        setState(() {
+          selectedIndex = index;
+        });
+
+        if (index == 0) {
+          homeKey.currentState?.loadHomeData();
+        }
+
+        if (index == 1) {
+          wardrobeKey.currentState?.refreshWardrobe();
+        }
+      },
 
         destinations: [
           NavigationDestination(

@@ -51,7 +51,7 @@ class _ProfileScreenState
     setState(() {
       nicknameController.text =
           profile['nickname'] as String? ??
-              'Closetly User';
+          'Closetly User';
 
       selectedGender =
           profile['gender'] as String?;
@@ -65,8 +65,7 @@ class _ProfileScreenState
         nicknameController.text.trim();
 
     if (nickname.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'Please enter a nickname.',
@@ -89,8 +88,7 @@ class _ProfileScreenState
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'Profile saved successfully.',
@@ -102,11 +100,10 @@ class _ProfileScreenState
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
           content: Text(
-            'Could not save profile: $e',
+            'Could not save your profile. Please try again.',
           ),
         ),
       );
@@ -121,14 +118,38 @@ class _ProfileScreenState
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme colors = theme.colorScheme;
+
+    final bool isDark =
+        theme.brightness == Brightness.dark;
+
+    final Color pageBackground = isDark
+        ? const Color(0xFF08051F)
+        : colors.surface;
+
+    final Color appBarBackground = isDark
+        ? const Color(0xFF100B31)
+        : colors.surface;
+
+    final Color cardBackground = isDark
+        ? const Color(0xFF151033)
+        : colors.surfaceContainerHighest;
+
+    final Color borderColor = isDark
+        ? const Color(0xFF29204F)
+        : colors.outlineVariant;
+
+    final Color secondaryText = isDark
+        ? const Color(0xFFAAA4C2)
+        : colors.onSurfaceVariant;
+
     return Scaffold(
-      backgroundColor:
-          const Color(0xFF08051F),
+      backgroundColor: pageBackground,
 
       appBar: AppBar(
-        backgroundColor:
-            const Color(0xFF100B31),
-        foregroundColor: Colors.white,
+        backgroundColor: appBarBackground,
+        foregroundColor: colors.onSurface,
         elevation: 0,
         title: const Text(
           'Profile',
@@ -139,9 +160,9 @@ class _ProfileScreenState
       ),
 
       body: isLoading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(
-                color: Color(0xFF8A5CFF),
+                color: colors.primary,
               ),
             )
           : SafeArea(
@@ -151,38 +172,41 @@ class _ProfileScreenState
                   crossAxisAlignment:
                       CrossAxisAlignment.start,
                   children: [
-                    // Profile header
+                    // PROFILE HEADER
                     Center(
                       child: Column(
                         children: [
                           Container(
                             width: 90,
                             height: 90,
-                            decoration:
-                                const BoxDecoration(
-                              gradient:
-                                  LinearGradient(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                                 colors: [
-                                  Color(0xFF8A5CFF),
-                                  Color(0xFF5E35B1),
+                                  colors.primary.withValues(
+                                    alpha: 0.85,
+                                  ),
+                                  colors.primary.withValues(
+                                    alpha: 0.55,
+                                  ),
                                 ],
                               ),
-                              shape:
-                                  BoxShape.circle,
+                              shape: BoxShape.circle,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.person_rounded,
-                              color: Colors.white,
+                              color: colors.onPrimary,
                               size: 48,
                             ),
                           ),
 
                           const SizedBox(height: 14),
 
-                          const Text(
+                          Text(
                             'Your Profile',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: colors.onSurface,
                               fontSize: 22,
                               fontWeight:
                                   FontWeight.bold,
@@ -191,11 +215,10 @@ class _ProfileScreenState
 
                           const SizedBox(height: 4),
 
-                          const Text(
+                          Text(
                             'Tell Closetly a little about you.',
                             style: TextStyle(
-                              color:
-                                  Color(0xFFAAA4C2),
+                              color: secondaryText,
                               fontSize: 14,
                             ),
                           ),
@@ -205,14 +228,13 @@ class _ProfileScreenState
 
                     const SizedBox(height: 32),
 
-                    // Nickname
-                    const Text(
+                    // NICKNAME
+                    Text(
                       'Nickname',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: colors.onSurface,
                         fontSize: 15,
-                        fontWeight:
-                            FontWeight.w600,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
 
@@ -221,14 +243,16 @@ class _ProfileScreenState
                     TextField(
                       controller:
                           nicknameController,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: colors.onSurface,
                       ),
+                      cursorColor: colors.primary,
                       textCapitalization:
                           TextCapitalization.words,
-                      decoration:
-                          _inputDecoration(
-                        icon: Icons.person_outline,
+                      decoration: _inputDecoration(
+                        context: context,
+                        icon:
+                            Icons.person_outline,
                         hint:
                             'Enter your nickname',
                       ),
@@ -236,112 +260,106 @@ class _ProfileScreenState
 
                     const SizedBox(height: 24),
 
-                    // Gender
-                    const Text(
+                    // GENDER
+                    Text(
                       'Gender',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: colors.onSurface,
                         fontSize: 15,
-                        fontWeight:
-                            FontWeight.w600,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
 
                     const SizedBox(height: 8),
 
                     DropdownButtonFormField<String>(
-                    initialValue: selectedGender,
+                      initialValue: selectedGender,
+
                       dropdownColor:
-                          const Color(0xFF151033),
-                      icon: const Icon(
+                          cardBackground,
+
+                      icon: Icon(
                         Icons
                             .keyboard_arrow_down_rounded,
-                        color:
-                            Color(0xFFAAA4C2),
+                        color: secondaryText,
                       ),
-                      style: const TextStyle(
-                        color: Colors.white,
+
+                      style: TextStyle(
+                        color: colors.onSurface,
                         fontSize: 15,
                       ),
-                      hint: const Text(
+
+                      hint: Text(
                         'Select your gender',
                         style: TextStyle(
-                          color:
-                              Color(0xFFAAA4C2),
+                          color: secondaryText,
                         ),
                       ),
-                      decoration:
-                          _inputDecoration(
+
+                      decoration: _inputDecoration(
+                        context: context,
                         icon: Icons
                             .person_outline_rounded,
                         hint:
                             'Select your gender',
                       ),
-                      items: genderOptions
-                          .map(
-                            (
-                              String gender,
-                            ) {
-                              return DropdownMenuItem<
-                                  String>(
-                                value: gender,
-                                child: Text(
-                                  gender,
-                                  style:
-                                      const TextStyle(
-                                    color:
-                                        Colors.white,
-                                  ),
-                                ),
-                              );
-                            },
-                          )
-                          .toList(),
+
+                      items: genderOptions.map(
+                        (String gender) {
+                          return DropdownMenuItem<
+                              String>(
+                            value: gender,
+                            child: Text(
+                              gender,
+                              style: TextStyle(
+                                color:
+                                    colors.onSurface,
+                              ),
+                            ),
+                          );
+                        },
+                      ).toList(),
+
                       onChanged:
                           (String? value) {
                         setState(() {
-                          selectedGender =
-                              value;
+                          selectedGender = value;
                         });
                       },
                     ),
 
                     const SizedBox(height: 12),
 
-                    // Explanation
+                    // EXPLANATION
                     Container(
                       width: double.infinity,
                       padding:
                           const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color:
-                            const Color(0xFF151033),
+                        color: cardBackground,
                         borderRadius:
-                            BorderRadius.circular(
-                          15,
-                        ),
+                            BorderRadius.circular(15),
                         border: Border.all(
-                          color:
-                              const Color(0xFF29204F),
+                          color: borderColor,
                         ),
                       ),
-                      child: const Row(
+                      child: Row(
                         crossAxisAlignment:
                             CrossAxisAlignment.start,
                         children: [
                           Icon(
                             Icons.auto_awesome_rounded,
-                            color:
-                                Color(0xFFB99AFF),
+                            color: colors.primary,
                             size: 20,
                           ),
-                          SizedBox(width: 12),
+
+                          const SizedBox(width: 12),
+
                           Expanded(
                             child: Text(
                               'Your gender preference can be used by Closetly AI to make more relevant outfit recommendations.',
                               style: TextStyle(
-                                color:
-                                    Color(0xFFAAA4C2),
+                                color: secondaryText,
                                 fontSize: 13,
                                 height: 1.4,
                               ),
@@ -353,26 +371,40 @@ class _ProfileScreenState
 
                     const SizedBox(height: 32),
 
-                    // Save button
+                    // SAVE BUTTON
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: isSaving
                             ? null
                             : saveProfile,
+
                         style:
                             ElevatedButton.styleFrom(
                           backgroundColor:
-                              const Color(0xFF7C4DFF),
+                              colors.primary,
+
                           foregroundColor:
-                              Colors.white,
+                              colors.onPrimary,
+
                           disabledBackgroundColor:
-                              const Color(0xFF3A2C62),
+                              colors.onSurface
+                                  .withValues(
+                            alpha: 0.12,
+                          ),
+
+                          disabledForegroundColor:
+                              colors.onSurface
+                                  .withValues(
+                            alpha: 0.38,
+                          ),
+
                           padding:
                               const EdgeInsets
                                   .symmetric(
                             vertical: 16,
                           ),
+
                           shape:
                               RoundedRectangleBorder(
                             borderRadius:
@@ -381,15 +413,16 @@ class _ProfileScreenState
                             ),
                           ),
                         ),
+
                         child: isSaving
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 22,
                                 height: 22,
                                 child:
                                     CircularProgressIndicator(
                                   strokeWidth: 2,
                                   color:
-                                      Colors.white,
+                                      colors.onPrimary,
                                 ),
                               )
                             : const Text(
@@ -410,39 +443,68 @@ class _ProfileScreenState
   }
 
   InputDecoration _inputDecoration({
+    required BuildContext context,
     required IconData icon,
     required String hint,
   }) {
+    final ThemeData theme =
+        Theme.of(context);
+
+    final ColorScheme colors =
+        theme.colorScheme;
+
+    final bool isDark =
+        theme.brightness == Brightness.dark;
+
+    final Color fillColor = isDark
+        ? const Color(0xFF151033)
+        : colors.surfaceContainerHighest;
+
+    final Color borderColor = isDark
+        ? const Color(0xFF29204F)
+        : colors.outlineVariant;
+
+    final Color secondaryText = isDark
+        ? const Color(0xFFAAA4C2)
+        : colors.onSurfaceVariant;
+
     return InputDecoration(
       prefixIcon: Icon(
         icon,
-        color: const Color(0xFF8A5CFF),
+        color: colors.primary,
       ),
+
       hintText: hint,
-      hintStyle: const TextStyle(
-        color: Color(0xFFAAA4C2),
+
+      hintStyle: TextStyle(
+        color: secondaryText,
       ),
+
       filled: true,
-      fillColor: const Color(0xFF151033),
+
+      fillColor: fillColor,
+
       border: OutlineInputBorder(
         borderRadius:
             BorderRadius.circular(15),
-        borderSide: const BorderSide(
-          color: Color(0xFF29204F),
+        borderSide: BorderSide(
+          color: borderColor,
         ),
       ),
+
       enabledBorder: OutlineInputBorder(
         borderRadius:
             BorderRadius.circular(15),
-        borderSide: const BorderSide(
-          color: Color(0xFF29204F),
+        borderSide: BorderSide(
+          color: borderColor,
         ),
       ),
+
       focusedBorder: OutlineInputBorder(
         borderRadius:
             BorderRadius.circular(15),
-        borderSide: const BorderSide(
-          color: Color(0xFF7C4DFF),
+        borderSide: BorderSide(
+          color: colors.primary,
           width: 1.5,
         ),
       ),

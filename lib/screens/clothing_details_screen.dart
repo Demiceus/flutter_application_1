@@ -94,6 +94,8 @@ class _ClothingDetailsScreenState
   @override
   Widget build(BuildContext context) {
     final ClothingItem item = widget.item;
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme colors = theme.colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -128,7 +130,9 @@ class _ClothingDetailsScreenState
               margin: const EdgeInsets.all(16),
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: theme.brightness == Brightness.dark
+                    ? const Color(0xFF151033)
+                    : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: item.imageBytes != null
@@ -136,11 +140,11 @@ class _ClothingDetailsScreenState
                       item.imageBytes!,
                       fit: BoxFit.cover,
                     )
-                  : const Center(
+                  : Center(
                       child: Icon(
                         Icons.checkroom_outlined,
                         size: 100,
-                        color: Colors.grey,
+                        color: colors.onSurfaceVariant,
                       ),
                     ),
             ),
@@ -154,13 +158,15 @@ class _ClothingDetailsScreenState
                 30,
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
                 children: [
                   Text(
                     item.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
+                      color: colors.onSurface,
                     ),
                   ),
 
@@ -202,37 +208,52 @@ class _DetailCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme colors = theme.colorScheme;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: theme.brightness == Brightness.dark
+            ? const Color(0xFF151033)
+            : colors.surface,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: colors.outline.withValues(alpha: 0.15),
+        ),
       ),
       child: Row(
         children: [
           Icon(
             icon,
             size: 24,
+            color: colors.onSurfaceVariant,
           ),
+
           const SizedBox(width: 14),
+
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
                 Text(
                   label,
                   style: TextStyle(
                     fontSize: 13,
-                    color: Colors.grey.shade600,
+                    color: colors.onSurfaceVariant,
                   ),
                 ),
+
                 const SizedBox(height: 3),
+
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
+                    color: colors.onSurface,
                   ),
                 ),
               ],

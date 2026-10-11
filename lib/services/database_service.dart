@@ -326,6 +326,34 @@ Future<void> saveAppearanceSetting({
   }
 
   // ==========================================================
+// CLOTHING
+// ==========================================================
+
+Future<void> updateClothing({
+  required String id,
+  required String name,
+  required String category,
+  String? color,
+  String? imagePath,
+  Uint8List? imageData,
+}) async {
+  final Database db = await database;
+
+  await db.update(
+    'clothing',
+    {
+      'name': name,
+      'category': category,
+      'color': color,
+      'imagePath': imagePath,
+      'imageData': imageData,
+    },
+    where: 'id = ?',
+    whereArgs: [id],
+  );
+}
+
+  // ==========================================================
   // CLOSE DATABASE
   // ==========================================================
 

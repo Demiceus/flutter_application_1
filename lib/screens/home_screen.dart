@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 
 import '../models/clothing_item.dart';
 import '../services/local_wardrobe_service.dart';
-
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final VoidCallback? onOpenAI;
 
+  const HomeScreen({
+    super.key,
+    this.onOpenAI,
+  });
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
   final LocalWardrobeService localWardrobeService =
       LocalWardrobeService();
 
@@ -178,14 +181,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(height: 12),
 
                         _buildAICard(
-                          card: card,
-                          border: border,
-                          primaryText: primaryText,
-                          secondaryText: secondaryText,
-                          accent: colors.primary,
-                          imageBackground:
-                              imageBackground,
-                        ),
+                        card: card,
+                        border: border,
+                        primaryText: primaryText,
+                        secondaryText: secondaryText,
+                        accent: colors.primary,
+                        imageBackground: imageBackground,
+                        onTap: widget.onOpenAI,
+                      ),
 
                         const SizedBox(height: 24),
 
@@ -549,21 +552,26 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildAICard({
-    required Color card,
-    required Color border,
-    required Color primaryText,
-    required Color secondaryText,
-    required Color accent,
-    required Color imageBackground,
-  }) {
-    return Container(
+ Widget _buildAICard({
+  required Color card,
+  required Color border,
+  required Color primaryText,
+  required Color secondaryText,
+  required Color accent,
+  required Color imageBackground,
+  required VoidCallback? onTap,
+}) {
+  return Material(
+  color: Colors.transparent,
+  child: InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(20),
+    child: Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: card,
-        borderRadius:
-            BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: border,
         ),
@@ -609,7 +617,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             FontWeight.bold,
                       ),
                     ),
+
                     const SizedBox(height: 3),
+
                     Text(
                       'Get outfit ideas from your closet',
                       style: TextStyle(
@@ -619,6 +629,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
+              ),
+
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: secondaryText,
+                size: 16,
               ),
             ],
           ),
@@ -640,7 +656,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: accent,
                   size: 20,
                 ),
+
                 const SizedBox(width: 10),
+
                 Expanded(
                   child: Text(
                     'Ask Closetly what to wear for any occasion.',
@@ -655,8 +673,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 
   Widget _buildRecentItems({
     required Color card,
